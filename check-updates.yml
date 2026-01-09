@@ -1,5 +1,5 @@
 - hosts: all
-  gather_facts: false
+  gather_facts: true
   become: yes
 
   tasks:
@@ -17,10 +17,24 @@
         apt list --upgradable 2>/dev/null | grep -E 'linux-image|linux-headers' || true
       register: kernel_updates
 
-    - name: Ausgabe der verfügbaren Updates
+    - name: Übersichtliche Ausgabe erzeugen
       ansible.builtin.debug:
-        msg:
-          - "Allgemeine Updates:"
-          - "{{ upgrades.stdout_lines }}"
-          - "Kernel Updates:"
-          - "{{ kernel_updates.stdout_lines }}"
+        msg: |
+          Host: {{ ansible_hostname }} ({{ inventory_hostname }})
+          Verfügbare Updates:
+          {% if upgrades.stdout_lines %}
+          {% for pkg in upgrades.stdout_lines %}
+            - {{ pkg }}
+          {% endfor %}
+          {% else %}
+            - Keine Updates verfügbar
+          {% endif %}
+
+          Kernel Updates:
+          {% if kernel_updates.stdout_lines %}
+          {% for pkg in kernel_updates.stdout_lines %}
+            - {{ pkg }}
+          {% endfor %}
+          {% else %}
+            - Keine Kernel-Updates
+          {% endif %}
