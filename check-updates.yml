@@ -1,0 +1,26 @@
+- hosts: all
+  gather_facts: false
+  become: yes
+
+  tasks:
+    - name: Paketlisten aktualisieren (ohne Upgrade)
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Verfügbare Updates abfragen
+      ansible.builtin.shell: |
+        apt list --upgradable 2>/dev/null | tail -n +2
+      register: upgrades
+
+    - name: Kernel-Updates prüfen
+      ansible.builtin.shell: |
+        apt list --upgradable 2>/dev/null | grep -E 'linux-image|linux-headers' || true
+      register: kernel_updates
+
+    - name: Ausgabe der verfügbaren Updates
+      ansible.builtin.debug:
+        msg:
+          - "Allgemeine Updates:"
+          - "{{ upgrades.stdout_lines }}"
+          - "Kernel Updates:"
+          - "{{ kernel_updates.stdout_lines }}"
